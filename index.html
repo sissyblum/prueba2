@@ -1,0 +1,369 @@
+<html><head><base href="https://cdn.android-tv-app.example/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tv Box Premium IPTV Player for Android TV with Shaka Player</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-image: url('https://www.shutterstock.com/image-photo/television-streaming-tv-broadcast-multimedia-260nw-1921373024.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: white;
+  }
+  #header {
+    background-color: black;
+    padding: 10px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+  }
+  #app-logo {
+    width: 50px;
+    height: 50px;
+    vertical-align: middle;
+    margin-right: 10px;
+  }
+  #main-container {
+    display: flex;
+    height: calc(100vh - 100px);
+  }
+  #channel-list {
+    width: 300px;
+    overflow-y: auto;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+  }
+  .channel-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #444;
+  }
+  .channel-item:hover, .channel-item:focus, .channel-item.selected {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  .channel-logo {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+  }
+  .channel-info {
+    flex-grow: 1;
+  }
+  .channel-name {
+    font-weight: bold;
+  }
+  .channel-category {
+    font-size: 12px;
+    color: #aaa;
+  }
+  .play-button {
+    background-color: transparent;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+  }
+  #video-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.7);
+  }
+  #video {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  #now-playing {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    padding: 10px;
+    text-align: center;
+  }
+  #error-message {
+    color: red;
+    text-align: center;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+<div id="header">
+  <img id="app-logo" src="https://play-lh.googleusercontent.com/3vgo5Xhpz1XPtNVenVnqXLNxyHmflyAGWVNXFcw0ZV3HvR50c4I-KHwVZpEkHEF-zyE=w240-h480-rw" alt="Tv Box Premium IPTV Logo">
+  Tv Box Premium IPTV
+</div>
+<div id="main-container">
+  <div id="channel-list" role="listbox" aria-label="Channel List"></div>
+  <div id="video-container">
+    <h1 id="channel-title"></h1>
+    <video id="video" controls></video>
+    <div id="error-message"></div>
+  </div>
+</div>
+<div id="now-playing">App exclusiva de <span id="current-channel">Tv Box Premium IPTV</span></div>
+
+<script>
+let player;
+const videoElement = document.getElementById('video');
+const channelList = document.getElementById('channel-list');
+const currentChannelElement = document.getElementById('current-channel');
+const channelTitleElement = document.getElementById('channel-title');
+const errorMessageElement = document.getElementById('error-message');
+let channels = [];
+let selectedChannelIndex = -1;
+
+function parseM3U(content) {
+  const lines = content.split('\n');
+  const parsedChannels = [];
+  let currentChannel = {};
+
+  for (let line of lines) {
+    line = line.trim();
+    if (line.startsWith('#EXTINF:')) {
+      currentChannel = {};
+      const infoMatch = line.match(/group-title="([^"]*)".*tvg-logo="([^"]*)",(.+)/);
+      if (infoMatch) {
+        currentChannel.category = infoMatch[1];
+        currentChannel.logo = infoMatch[2];
+        currentChannel.name = infoMatch[3];
+      }
+    } else if (line.startsWith('#KODIPROP:')) {
+      const [key, value] = line.split(':').slice(1).join(':').split('=');
+      currentChannel[key.trim().toLowerCase().replace(/\./g, '_')] = value.trim();
+    } else if (line && !line.startsWith('#')) {
+      currentChannel.url = line;
+      parsedChannels.push(currentChannel);
+      currentChannel = {};
+    }
+  }
+
+  return parsedChannels;
+}
+
+async function loadChannel(channel) {
+  try {
+    errorMessageElement.textContent = '';
+
+    if (channel.inputstream_adaptive_license_type === 'clearkey') {
+      const licenseKey = channel.inputstream_adaptive_license_key.split(':');
+      const clearKey = {
+        keyId: licenseKey[0],
+        key: licenseKey[1]
+      };
+
+      player.configure({
+        drm: {
+          clearKeys: {
+            [clearKey.keyId]: clearKey.key
+          }
+        }
+      });
+    } else {
+      player.configure({
+        drm: {}
+      });
+    }
+
+    await player.load(channel.url);
+    player.play();
+    currentChannelElement.textContent = channel.name;
+    channelTitleElement.textContent = channel.name;
+  } catch (error) {
+    console.error('Error loading channel:', error);
+    errorMessageElement.textContent = `Error: ${error.message}`;
+    currentChannelElement.textContent = 'Tv Box Premium IPTV';
+  }
+}
+
+function renderChannelList() {
+  channelList.innerHTML = '';
+  channels.forEach((channel, index) => {
+    const channelItem = document.createElement('div');
+    channelItem.className = 'channel-item';
+    channelItem.tabIndex = 0;
+    channelItem.role = 'option';
+    channelItem.setAttribute('aria-selected', index === selectedChannelIndex);
+    channelItem.innerHTML = `
+      <img class="channel-logo" src="${channel.logo}" alt="${channel.name} logo">
+      <div class="channel-info">
+        <div class="channel-name">${channel.name}</div>
+        <div class="channel-category">${channel.category}</div>
+      </div>
+      <button class="play-button" aria-label="Play ${channel.name}">▶</button>
+    `;
+    channelItem.onclick = (e) => {
+      if (e.target.classList.contains('play-button')) {
+        selectAndPlayChannel(index);
+      } else {
+        selectChannel(index);
+      }
+    };
+    channelItem.onkeydown = (e) => handleChannelItemKeydown(e, index);
+    if (index === selectedChannelIndex) {
+      channelItem.classList.add('selected');
+    }
+    channelList.appendChild(channelItem);
+  });
+}
+
+function selectAndPlayChannel(index) {
+  selectedChannelIndex = index;
+  renderChannelList();
+  loadChannel(channels[index]);
+}
+
+function selectChannel(index) {
+  selectedChannelIndex = index;
+  renderChannelList();
+}
+
+function handleChannelItemKeydown(event, index) {
+  switch (event.key) {
+    case 'Enter':
+      selectAndPlayChannel(index);
+      break;
+    case 'ArrowUp':
+      event.preventDefault();
+      navigateChannelList('up');
+      break;
+    case 'ArrowDown':
+      event.preventDefault();
+      navigateChannelList('down');
+      break;
+    case 'ArrowRight':
+      event.preventDefault();
+      const playButton = event.target.querySelector('.play-button');
+      if (playButton) {
+        playButton.focus();
+      }
+      break;
+  }
+}
+
+function navigateChannelList(direction) {
+  if (direction === 'up') {
+    selectedChannelIndex = (selectedChannelIndex - 1 + channels.length) % channels.length;
+  } else if (direction === 'down') {
+    selectedChannelIndex = (selectedChannelIndex + 1) % channels.length;
+  }
+  renderChannelList();
+  channelList.children[selectedChannelIndex].focus();
+}
+
+async function initApp() {
+  try {
+    shaka.polyfill.installAll();
+    if (shaka.Player.isBrowserSupported()) {
+      player = new shaka.Player(videoElement);
+      
+      player.configure({
+        preferredAudioCodecs: ['opus', 'vorbis', 'mp4a', 'ac3'],
+        preferredVideoCodecs: ['vp9', 'vp8', 'avc1', 'av01'],
+        streaming: {
+          bufferingGoal: 90,
+          rebufferingGoal: 15,
+          bufferBehind: 30,
+        },
+        manifest: {
+          dash: {
+            ignoreMinBufferTime: true,
+            autoCorrectDrift: true,
+          },
+        },
+        drm: {
+          servers: {
+            'com.widevine.alpha': 'https://widevine-proxy.example.com/proxy',
+            'com.microsoft.playready': 'https://playready-license.example.com/rightsmanager.asmx',
+            'com.apple.fps.1_0': 'https://fairplay-license.example.com/fps/',
+          },
+          advanced: {
+            'com.widevine.alpha': {
+              videoRobustness: 'SW_SECURE_CRYPTO',
+              audioRobustness: 'SW_SECURE_CRYPTO',
+            },
+          },
+        },
+      });
+      
+      player.addEventListener('error', onErrorEvent);
+
+      const sampleM3U = `
+#EXTINF:-1 tvg-logo="https://static.flow.com.ar/images/9537/CH_LOGO/60/40/0/0/21934865078382.png" ,TNT SPORTS
+#KODIPROP:inputstreamaddon=inputstream.adaptive
+#KODIPROP:inputstream.adaptive.manifest_type=mpd
+#KODIPROP:inputstream.adaptive.license_type=clearkey
+#KODIPROP:inputstream.adaptive.license_key=9be1432e1e594c8d0648a44d3d9f0c46:8e6c785b14d973c504074b1920f11b15
+http://cdn.cvattv.com.ar/live/c3eds/Adult_Swim/SA_Live_dash_enc/Adult_Swim.mpd
+#EXTINF:-1 group-title="ESPN Sports" tvg-id="" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/ESPN_Premium_logo.svg/1200px-ESPN_Premium_logo.svg.png",ESPN PREMIUM
+#KODIPROP:inputstreamaddon=inputstream.adaptive
+#KODIPROP:inputstream.adaptive.manifest_type=mpd
+#KODIPROP:inputstream.adaptive.license_type=clearkey
+#KODIPROP:inputstream.adaptive.license_key=4c230dbc7f6a4bfa6ad0aa73ff792374:4186a7c2a15f590a9399886feaec4257
+https://cdn.cvattv.com.ar//live/c7eds/Fox_Sports_Premiun_HD/SA_Live_dash_enc/Fox_Sports_Premiun_HD.mpd
+      `;
+      
+      channels = parseM3U(sampleM3U);
+      renderChannelList();
+      
+      if (channels.length > 0) {
+        selectChannel(0);
+      }
+
+      document.addEventListener('keydown', handleGlobalKeydown);
+    } else {
+      console.error('Browser not supported!');
+      errorMessageElement.textContent = 'Error: Browser not supported';
+    }
+  } catch (error) {
+    console.error('Error initializing app:', error);
+    errorMessageElement.textContent = `Error initializing app: ${error.message}`;
+  }
+}
+
+function handleGlobalKeydown(event) {
+  switch (event.key) {
+    case 'ArrowUp':
+    case 'ArrowDown':
+      if (document.activeElement.closest('#channel-list')) {
+        return;
+      }
+      event.preventDefault();
+      navigateChannelList(event.key === 'ArrowUp' ? 'up' : 'down');
+      break;
+    case 'ArrowLeft':
+      if (document.activeElement === videoElement) {
+        channelList.focus();
+        if (selectedChannelIndex === -1) {
+          selectedChannelIndex = 0;
+        }
+        renderChannelList();
+        channelList.children[selectedChannelIndex].focus();
+      }
+      break;
+    case 'ArrowRight':
+      if (document.activeElement.closest('#channel-list')) {
+        videoElement.focus();
+      }
+      break;
+  }
+}
+
+function onErrorEvent(event) {
+  console.error('Error code', event.detail.code, 'object', event.detail);
+  errorMessageElement.textContent = `Playback Error: ${event.detail.message}`;
+}
+
+document.addEventListener('DOMContentLoaded', initApp);
+</script>
+</body></html>
