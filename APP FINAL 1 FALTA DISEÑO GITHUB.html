@@ -1,0 +1,286 @@
+<html><head><base href="https://tv-box-premium-iptv.com/"><title>TV Box Premium IPTV</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #1e1e1e;
+    color: #fff;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 {
+    text-align: center;
+    color: #00a0e9;
+    font-size: 2.5em;
+    margin-bottom: 30px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  }
+  #videoPlayer {
+    width: 100%;
+    max-width: 640px;
+    height: 360px;
+    margin: 20px auto;
+    display: block;
+    box-shadow: 0 0 20px rgba(0, 160, 233, 0.3);
+    border-radius: 10px;
+  }
+  #channelList {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 30px;
+  }
+  .channel-button {
+    background-color: #2a2a2a;
+    color: #fff;
+    border: none;
+    padding: 12px 20px;
+    cursor: pointer;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+  .channel-button:hover, .channel-button:focus {
+    background-color: #3a3a3a;
+    outline: 2px solid #00a0e9;
+    transform: translateY(-2px);
+  }
+  .channel-button.active {
+    background-color: #00a0e9;
+    box-shadow: 0 6px 10px rgba(0,160,233,0.3);
+  }
+  .channel-logo {
+    width: 35px;
+    height: 35px;
+    margin-right: 12px;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+  #errorMessage {
+    color: #ff6b6b;
+    text-align: center;
+    margin-top: 15px;
+    font-weight: bold;
+  }
+  #channelInfo {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background-color: rgba(0,0,0,0.7);
+    padding: 10px;
+    border-radius: 5px;
+    display: none;
+    z-index: 1000;
+  }
+</style>
+</head>
+<body>
+  <h1>TV Box Premium IPTV</h1>
+  <video id="videoPlayer" controls></video>
+  <div id="channelList"></div>
+  <div id="errorMessage"></div>
+  <div id="channelInfo"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.3.0/dist/shaka-player.compiled.min.js"></script>
+  <script>
+    const videoPlayer = document.getElementById('videoPlayer');
+    const channelList = document.getElementById('channelList');
+    const errorMessageDiv = document.getElementById('errorMessage');
+    const channelInfoDiv = document.getElementById('channelInfo');
+    let player;
+    let currentChannelIndex = 0;
+
+    const channels = [
+      {
+        name: "TYC SPORTS",
+        logo: "https://i.ibb.co/MN7HcLq/tycsports.png",
+        licenseKey: "2b21c8fa9a329cce311a4c4a4aa996a1:cc23ea1fb32629f9e1f48c8deeae3e5b",
+        url: "https://edge-mix02-mun.cvattv.com.ar/live/c7eds/TyCSport/SA_Live_dash_enc/TyCSport.mpd"
+      },
+      {
+        name: "TN",
+        logo: "https://i.ibb.co/TH2dGD9/tn.png",
+        licenseKey: "7ceb1cd0622cd7e88fcdc99fe3a55de6:951637093d41c7388a1ef3f620cfea21",
+        url: "https://edge-live17-hr.cvattv.com.ar/live/c4eds/TodoNoticias/SA_Live_dash_enc/TodoNoticias.mpd"
+      },
+      {
+        name: "ESPN PREMIUM",
+        logo: "https://i.ibb.co/TH2dGD9/espnpremium.png",
+        licenseKey: "4c230dbc7f6a4bfa6ad0aa73ff792374:4186a7c2a15f590a9399886feaec4257",
+        url: "https://edge-live15-hr.cvattv.com.ar/live/c4eds/Fox_Sports_Premiun_HD/SA_Live_dash_enc/Fox_Sports_Premiun_HD.mpd"
+      },
+      {
+        name: "TNT SPORTS",
+        logo: "https://i.ibb.co/TH2dGD9/tntsports.png",
+        licenseKey: "bc80fa3da696e503f940fde5f681a1c5:ea46e4e9f1132e8dd71fb77f7d55058a",
+        url: "https://edge-live31-hr.cvattv.com.ar/live/c3eds/TNT_Sports_HD/SA_Live_dash_enc/TNT_Sports_HD.mpd"
+      },
+      {
+        name: "Eventos 1 HD",
+        logo: "https://i.ibb.co/TH2dGD9/eventos1hd.png",
+        licenseKey: "5c86e237317c2231ac1bc130e995fad6:dcacf7b239ee03df3c69ca11dbcde4eb",
+        url: "https://edge-mix02-mun.cvattv.com.ar/live/c3eds/Eventos1HD/SA_Live_dash_enc/Eventos1HD.mpd"
+      }
+    ];
+
+    function createChannelButtons() {
+      channels.forEach((channel, index) => {
+        const button = document.createElement('button');
+        button.className = 'channel-button';
+        button.innerHTML = `
+          <img class="channel-logo" src="${channel.logo}" alt="${channel.name} logo">
+          <span>${channel.name}</span>
+        `;
+        button.onclick = () => loadChannel(index);
+        button.ondblclick = () => toggleFullscreen();
+        channelList.appendChild(button);
+      });
+    }
+
+    async function loadChannel(index) {
+      errorMessageDiv.textContent = '';
+      currentChannelIndex = index;
+      const channel = channels[index];
+      
+      if (player) {
+        await player.unload();
+        player = null;
+      }
+
+      player = new shaka.Player(videoPlayer);
+
+      try {
+        const [keyId, key] = channel.licenseKey.split(':');
+        player.configure({
+          drm: {
+            clearKeys: {
+              [keyId]: key
+            }
+          }
+        });
+
+        await player.load(channel.url);
+        videoPlayer.play();
+
+        // Update active button
+        document.querySelectorAll('.channel-button').forEach((btn, i) => {
+          btn.classList.toggle('active', i === index);
+        });
+
+        showChannelInfo(channel.name);
+      } catch (error) {
+        console.error('Error loading video:', error);
+        errorMessageDiv.textContent = `Error: ${error.message || 'Unable to load video'}`;
+      }
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        if (videoPlayer.requestFullscreen) {
+          videoPlayer.requestFullscreen();
+        } else if (videoPlayer.mozRequestFullScreen) { // Firefox
+          videoPlayer.mozRequestFullScreen();
+        } else if (videoPlayer.webkitRequestFullscreen) { // Chrome, Safari and Opera
+          videoPlayer.webkitRequestFullscreen();
+        } else if (videoPlayer.msRequestFullscreen) { // IE/Edge
+          videoPlayer.msRequestFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.mozCancelFullScreen) { // Firefox
+          document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) { // Chrome, Safari and Opera
+          document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) { // IE/Edge
+          document.msExitFullscreen();
+        }
+      }
+    }
+
+    function showChannelInfo(channelName) {
+      channelInfoDiv.textContent = channelName;
+      channelInfoDiv.style.display = 'block';
+      setTimeout(() => {
+        channelInfoDiv.style.display = 'none';
+      }, 3000);
+    }
+
+    function changeChannel(direction) {
+      let newIndex = currentChannelIndex + direction;
+      if (newIndex < 0) {
+        newIndex = channels.length - 1;
+      } else if (newIndex >= channels.length) {
+        newIndex = 0;
+      }
+      loadChannel(newIndex);
+    }
+
+    function initApp() {
+      shaka.polyfill.installAll();
+      if (shaka.Player.isBrowserSupported()) {
+        createChannelButtons();
+        // Load the first channel by default
+        loadChannel(0);
+      } else {
+        errorMessageDiv.textContent = 'Browser not supported for video playback';
+      }
+    }
+
+    // Handle keyboard navigation
+    function handleKeyNavigation(event) {
+      const isFullscreen = !!document.fullscreenElement;
+      
+      switch(event.key) {
+        case 'ArrowRight':
+        case 'ArrowDown':
+          event.preventDefault();
+          if (isFullscreen) {
+            changeChannel(1);
+          } else {
+            const buttons = Array.from(channelList.getElementsByClassName('channel-button'));
+            const currentIndex = buttons.findIndex(btn => btn === document.activeElement);
+            if (currentIndex < buttons.length - 1) {
+              buttons[currentIndex + 1].focus();
+            }
+          }
+          break;
+        case 'ArrowLeft':
+        case 'ArrowUp':
+          event.preventDefault();
+          if (isFullscreen) {
+            changeChannel(-1);
+          } else {
+            const buttons = Array.from(channelList.getElementsByClassName('channel-button'));
+            const currentIndex = buttons.findIndex(btn => btn === document.activeElement);
+            if (currentIndex > 0) {
+              buttons[currentIndex - 1].focus();
+            }
+          }
+          break;
+        case 'Enter':
+          event.preventDefault();
+          const buttons = Array.from(channelList.getElementsByClassName('channel-button'));
+          const currentIndex = buttons.findIndex(btn => btn === document.activeElement);
+          if (currentIndex !== -1) {
+            loadChannel(currentIndex);
+          }
+          break;
+        case 'f':
+          event.preventDefault();
+          toggleFullscreen();
+          break;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', initApp);
+    document.addEventListener('keydown', handleKeyNavigation);
+
+    // Double click on video to toggle fullscreen
+    videoPlayer.addEventListener('dblclick', toggleFullscreen);
+  </script>
+</body></html>
