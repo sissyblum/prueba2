@@ -49,11 +49,19 @@
     color: #fff;
     font-size: 1.5em;
     font-family: 'Brush Script MT', cursive;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    letter-spacing: 1px;
+    background: linear-gradient(145deg, #2a2a2a, #323232);
+    padding: 5px 15px;
+    border-radius: 15px;
+    box-shadow: 
+      3px 3px 6px rgba(0,0,0,0.2),
+      -3px -3px 6px rgba(255,255,255,0.05);
   }
   #videoPlayer {
     width: 100%;
-    max-width: 480px; /* Adjusted for Android TV */
-    height: 270px; /* 16:9 aspect ratio for 480px width */
+    max-width: 960px;
+    height: 540px;
     margin: 20px auto;
     display: block;
     box-shadow: 0 0 20px rgba(0, 160, 233, 0.3);
@@ -146,6 +154,12 @@
         url: "https://edge-live15-hr.cvattv.com.ar/live/c4eds/Fox_Sports_Premiun_HD/SA_Live_dash_enc/Fox_Sports_Premiun_HD.mpd"
       },
       {
+        name: "TNT SPORTS,
+        logo: "https://i.ibb.co/TH2dGD9/tntsports.png",
+        licenseKey: "bc80fa3da696e503f940fde5f681a1c5:ea46e4e9f1132e8dd71fb77f7d55058a",
+        url: "https://edge-live31-hr.cvattv.com.ar/live/c3eds/TNT_Sports_HD/SA_Live_dash_enc/TNT_Sports_HD.mpd"
+      },
+      {
         name: "Eventos 1 HD",
         logo: "https://i.ibb.co/TH2dGD9/eventos1hd.png",
         licenseKey: "5c86e237317c2231ac1bc130e995fad6:dcacf7b239ee03df3c69ca11dbcde4eb",
@@ -203,7 +217,10 @@
           <span>${channel.name}</span>
         `;
         button.onclick = () => loadChannel(index);
-        button.ondblclick = () => toggleFullscreen();
+        button.ondblclick = () => {
+          loadChannel(index);
+          toggleFullscreen();
+        };
         channelList.appendChild(button);
       });
     }
@@ -225,13 +242,6 @@
           drm: {
             clearKeys: {
               [keyId]: key
-            }
-          },
-          abr: {
-            defaultBandwidthEstimate: 500000, // 500 kbps
-            restrictions: {
-              minHeight: 240,
-              maxHeight: 480
             }
           }
         });
@@ -296,7 +306,7 @@
       }
     }
 
-    // Handle keyboard navigation
+    // Handle keyboard and remote control navigation
     function handleKeyNavigation(event) {
       const buttons = Array.from(channelList.getElementsByClassName('channel-button'));
       const currentIndex = buttons.findIndex(btn => btn === document.activeElement);
@@ -327,6 +337,7 @@
           }
           break;
         case 'f':
+        case 'F':
           event.preventDefault();
           toggleFullscreen();
           break;
@@ -338,5 +349,26 @@
 
     // Double click on video to toggle fullscreen
     videoPlayer.addEventListener('dblclick', toggleFullscreen);
+
+    // Handle Android TV remote control
+    let lastClickTime = 0;
+    const doubleClickThreshold = 300; // milliseconds
+
+    function handleAndroidTVRemote(event) {
+      const currentTime = new Date().getTime();
+      const timeSinceLastClick = currentTime - lastClickTime;
+
+      if (timeSinceLastClick < doubleClickThreshold) {
+        // Double click detected
+        event.preventDefault();
+        toggleFullscreen();
+      }
+
+      lastClickTime = currentTime;
+    }
+
+    // Add event listeners for Android TV remote control
+    document.addEventListener('keydown', handleAndroidTVRemote);
+    videoPlayer.addEventListener('click', handleAndroidTVRemote);
   </script>
 </body></html>
