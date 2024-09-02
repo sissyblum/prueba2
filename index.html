@@ -854,6 +854,37 @@
             }
         });
 
+        const audioContext = new AudioContext();
+    const videoElement = document.getElementById('videoPlayer');
+    const sourceNode = audioContext.createMediaElementSource(videoElement);
+    const gainNode = audioContext.createGain();
+    sourceNode.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    let isBackgroundAudioEnabled = false;
+
+    function enableBackgroundAudio() {
+      isBackgroundAudioEnabled = true;
+      gainNode.gain.value = 1;
+    }
+
+    function disableBackgroundAudio() {
+      isBackgroundAudioEnabled = false;
+      gainNode.gain.value = 0;
+    }
+
+    videoElement.addEventListener('pause', () => {
+      if (isBackgroundAudioEnabled) {
+        gainNode.gain.value = 0;
+      }
+    });
+
+    videoElement.addEventListener('play', () => {
+      if (isBackgroundAudioEnabled) {
+        gainNode.gain.value = 1;
+      }
+    });
+
         window.addEventListener('load', () => {
             loadChannelsFromLocalStorage();
             createChannelButtons();
