@@ -1,0 +1,792 @@
+<html><head><base href="https://tv-box-premium-iptv.com/"><title>TV Box Premium IPTV</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/8/86/El_futbol_y_la_luna_2024.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        #mainTitle {
+            text-align: center;
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 15px 30px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 600px;
+        }
+        #mainTitle span {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s, transform 0.5s;
+            margin: 0 5px;
+        }
+        #whatsappInfo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 300px;
+        }
+        #whatsappLogo {
+            width: 30px;
+            height: 30px;
+            margin-right: 10px;
+        }
+        #whatsappText {
+            font-size: 0.9em;
+            font-weight: 400;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        #whatsappNumber {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #25D366;
+        }
+        #videoContainer {
+            width: 100%;
+            max-width: 640px;
+            margin: 20px auto;
+            position: relative;
+        }
+        #videoPlayer, #youtubePlayer, #kickPlayer {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 16 / 9;
+            display: block;
+            box-shadow: 0 10px 30px rgba(0, 160, 233, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        #categoryList {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 1000px;
+        }
+        .category-button {
+            background-color: rgba(30, 30, 30, 0.8);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .category-button:hover, .category-button:focus {
+            background-color: rgba(0, 160, 233, 0.8);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,160,233,0.2);
+        }
+        .category-button.active {
+            background-color: rgba(0, 160, 233, 0.8);
+            box-shadow: 0 4px 8px rgba(0,160,233,0.4);
+        }
+        #channelList {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+            margin-top: 30px;
+        }
+        .channel-button {
+            background-color: rgba(30, 30, 30, 0.8);
+            color: #fff;
+            border: none;
+            padding: 15px;
+            cursor: pointer;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .channel-button:hover, .channel-button:focus {
+            background-color: rgba(42, 42, 42, 0.9);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,160,233,0.2);
+        }
+        .channel-button.active {
+            background-color: rgba(0, 160, 233, 0.8);
+            box-shadow: 0 6px 12px rgba(0,160,233,0.4);
+        }
+        .channel-logo {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+        .channel-name {
+            font-size: 0.9em;
+            font-weight: 400;
+            text-align: center;
+        }
+        .play-button {
+            background-color: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            margin: 5px;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .play-button:hover {
+            background-color: rgba(255,255,255,0.2);
+            transform: scale(1.1);
+        }
+        .favorite-star {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 1.2em;
+            color: #ffd700;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .favorite-star:hover {
+            transform: scale(1.2);
+        }
+        #channelInfo {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0,0,0,0.7);
+            padding: 10px 20px;
+            border-radius: 30px;
+            display: none;
+            z-index: 1000;
+            font-size: 1em;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+        #resolutionSelector, #audioSelector {
+            position: absolute;
+            bottom: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+        #resolutionSelector {
+            right: 10px;
+        }
+        #audioSelector {
+            left: 10px;
+        }
+        @media (max-width: 768px) {
+            #mainTitle {
+                font-size: 2em;
+                padding: 10px 20px;
+            }
+            #videoContainer {
+                max-width: 100%;
+            }
+            #channelList {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 15px;
+            }
+            .channel-button {
+                padding: 10px;
+            }
+            .channel-logo {
+                width: 50px;
+                height: 50px;
+            }
+            .channel-name {
+                font-size: 0.8em;
+            }
+            .category-button {
+                font-size: 0.8em;
+                padding: 8px 16px;
+            }
+        }
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            #mainTitle {
+                font-size: 1.5em;
+                padding: 8px 15px;
+            }
+            #channelList {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                gap: 10px;
+            }
+            .channel-logo {
+                width: 40px;
+                height: 40px;
+            }
+            .channel-name {
+                font-size: 0.7em;
+            }
+            #resolutionSelector, #audioSelector {
+                padding: 3px 6px;
+                font-size: 0.8em;
+            }
+            .category-button {
+                font-size: 0.7em;
+                padding: 6px 12px;
+            }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px rgba(0, 160, 233, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(0, 160, 233, 0.8); }
+            100% { box-shadow: 0 0 5px rgba(0, 160, 233, 0.5); }
+        }
+    </style>
+</head>
+<body>
+    <h1 id="mainTitle">
+        <span>TV</span>
+        <span>BOX</span>
+        <span>PREMIUM</span>
+        <span>IPTV</span>
+    </h1>
+    
+    <div id="whatsappInfo">
+        <svg id="whatsappLogo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+            <path fill="#25D366" d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/>
+        </svg>
+        <span id="whatsappText">VENTAS Y ATENCION AL CLIENTE</span>
+        <span id="whatsappNumber">1125875444</span>
+    </div>
+
+    <div id="categoryList">
+        <button class="category-button" data-category="all">TODOS</button>
+        <button class="category-button" data-category="deportes">DEPORTES</button>
+        <button class="category-button" data-category="pack-futbol">PACK FÚTBOL</button>
+        <button class="category-button" data-category="cine">CINE</button>
+        <button class="category-button" data-category="noticias">NOTICIAS</button>
+        <button class="category-button" data-category="streaming">STREAMING</button>
+        <button class="category-button" data-category="favoritos">FAVORITOS</button>
+    </div>
+
+    <div id="videoContainer">
+        <video id="videoPlayer" controls playsinline></video>
+        <iframe id="youtubePlayer" style="display:none" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
+        <iframe id="kickPlayer" style="display:none" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
+        <select id="resolutionSelector">
+            <option value="1080">1080p</option>
+            <option value="720">720p</option>
+            <option value="480">480p</option>
+            <option value="360">360p</option>
+            <option value="240">240p</option>
+        </select>
+        <select id="audioSelector">
+            <option value="default">Audio por defecto</option>
+        </select>
+        <button id="castButton">
+        </button>
+    </div>
+    <div id="channelList"></div>
+    <div id="channelInfo"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.3.0/dist/shaka-player.compiled.min.js"></script>
+    <script>
+        const videoPlayer = document.getElementById('videoPlayer');
+        const youtubePlayer = document.getElementById('youtubePlayer');
+        const kickPlayer = document.getElementById('kickPlayer');
+        const channelList = document.getElementById('channelList');
+        const channelInfoDiv = document.getElementById('channelInfo');
+        const resolutionSelector = document.getElementById('resolutionSelector');
+        const audioSelector = document.getElementById('audioSelector');
+        const categoryList = document.getElementById('categoryList');
+        const castButton = document.getElementById('castButton');
+        let player;
+        let currentChannelIndex = 0;
+        let lastTapTime = 0;
+        let lastClickTime = 0;
+        let hls;
+
+        const channels = [
+        {
+                name: "TYC SPORTS",
+                logo: "https://i.ibb.co/MN7HcLq/tycsports.png",
+                licenseKey: "2b21c8fa9a329cce311a4c4a4aa996a1:cc23ea1fb32629f9e1f48c8deeae3e5b",
+                url: "https://edge-mix02-mun.cvattv.com.ar/live/c7eds/TyCSport/SA_Live_dash_enc/TyCSport.mpd",
+                type: "mpd",
+                category: "deportes"
+            },
+            {
+                name: "TN",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/f/fb/Tn_piola_%281%29.png",
+                licenseKey: "7ceb1cd0622cd7e88fcdc99fe3a55de6:951637093d41c7388a1ef3f620cfea21",
+                url: "https://edge-live17-hr.cvattv.com.ar/live/c4eds/TodoNoticias/SA_Live_dash_enc/TodoNoticias.mpd",
+                type: "mpd",
+                category: "noticias"
+            },
+            {
+                name: "ESPN PREMIUM",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/4/4a/Espnpremium_%281%29.jpg",
+                licenseKey: "4c230dbc7f6a4bfa6ad0aa73ff792374:4186a7c2a15f590a9399886feaec4257",
+                url: "https://edge-live15-hr.cvattv.com.ar/live/c4eds/Fox_Sports_Premiun_HD/SA_Live_dash_enc/Fox_Sports_Premiun_HD.mpd",
+                type: "mpd",
+                category: "pack-futbol"
+            },
+            {
+                name: "TNT SPORTS",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/e/e0/TNT_Sports_logo_2021_%281%29.png",
+                licenseKey: "bc80fa3da696e503f940fde5f681a1c5:ea46e4e9f1132e8dd71fb77f7d55058a",
+                url: "https://edge-live31-hr.cvattv.com.ar/live/c3eds/TNT_Sports_HD/SA_Live_dash_enc/TNT_Sports_HD.mpd",
+                type: "mpd",
+                category: "pack-futbol"
+            },
+            {
+                name: "Eventos 1 HD",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/a/a6/Flow_2021.jpg",
+                licenseKey: "5c86e237317c2231ac1bc130e995fad6:dcacf7b239ee03df3c69ca11dbcde4eb",
+                url: "https://edge-mix02-mun.cvattv.com.ar/live/c3eds/Eventos1HD/SA_Live_dash_enc/Eventos1HD.mpd",
+                type: "mpd",
+                category: "deportes"
+            },
+            {
+                name: "DGO SPORTS",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/2/2b/Logo-directv-sports_4x3_final_%281%29.png",
+                url: "http://alfatv.lat:2082/live/Margarita1266/Temporada296/520020.m3u8",
+                type: "m3u8",
+                category: "deportes"
+            },
+            {
+                name: "HBO",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/6/60/Hbo_%281%29.png",
+                licenseKey: "5317283f4110fac3fb3a0becd9f648bc:0754a03c926b1247216e01d9dbcfac28",
+                url: "https://edge-live18-sl.cvattv.com.ar/live/c4eds/HBOHD/SA_Live_dash_enc/HBOHD.mpd",
+                type: "mpd",
+                category: "cine"
+            },
+            {
+                name: "HBO 2",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/6/60/Hbo_%281%29.png",
+                licenseKey: "c90cc57ad2c436e5a77db2f8d9db2d85:04f6c73984bdcffd013050608497935d",
+                url: "https://edge-live13-sl.cvattv.com.ar/live/c6eds/HBO_2/SA_Live_dash_enc/HBO_2.mpd",
+                type: "mpd",
+                category: "cine"
+            },
+            {
+                name: "HBO PLUS",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/6/60/Hbo_%281%29.png",
+                licenseKey: "f0e7f7d458990edfab7b98b412564615:79205754b7f84a62661c2dbe9de5dd5d",
+                url: "https://edge-live15-hr.cvattv.com.ar/live/c6eds/HBO_Plus/SA_Live_dash_enc/HBO_Plus.mpd",
+                type: "mpd",
+                category: "cine"
+            },
+            {
+                name: "HBO FAMILY",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/6/60/Hbo_%281%29.png",
+                licenseKey: "535473132f68082160b489482ca35f8e:e90fd91fcd3fc809bed2b1c0d37f7297",
+                url: "https://edge-live13-sl.cvattv.com.ar/live/c6eds/HBO_Family/SA_Live_dash_enc/HBO_Family.mpd",
+                type: "mpd",
+                category: "cine"
+            },
+            {
+                name: "HBO SIGNATURE",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/6/60/Hbo_%281%29.png",
+                licenseKey: "e866499fbc1149f49989672075aa3a68:d2dd5c95623c6343240981c2202fc311",
+                url: "https://edge-live16-sl.cvattv.com.ar/live/c6eds/HBO_Signature/SA_Live_dash_enc/HBO_Signature.mpd",
+                type: "mpd",
+                category: "cine"
+            },
+            {
+                name: "HBO POP",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/6/60/Hbo_%281%29.png",
+                licenseKey: "f4e1ce5cef7e9a110fe968f8881b21fa:6bbe2062b150b11496cdd5fbdd9c89d6",
+                url: "https://edge-live11-hr.cvattv.com.ar/live/c7eds/HBO_POP/SA_Live_dash_enc/HBO_POP.mpd",
+                type: "mpd",
+                category: "cine"
+            },
+            {
+                name: "HBO XTREME",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/6/60/Hbo_%281%29.png",
+                licenseKey: "d504011bbef467c0de3a7534e302a6d4:334103e2abe16faa7f9ab2e3097c5a58",
+                url: "https://edge-live13-sl.cvattv.com.ar/live/c6eds/HBO_Extreme/SA_Live_dash_enc/HBO_Extreme.mpd",
+                type: "mpd",
+                category: "cine"
+            },
+            {
+                name: "HBO MUNDI",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/6/60/Hbo_%281%29.png",
+                licenseKey: "7821b2662148fe333d5191acbb8a5c1f:ae43f3e2545237ebda58b13813b5d328",
+                url: "https://edge-live11-sl.cvattv.com.ar/live/c6eds/HBO_Mundi/SA_Live_dash_enc/HBO_Mundi.mpd",
+                type: "mpd",
+                category: "cine"
+            },
+            {
+                name: "LUZU TV",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/5/52/LuzuTV_%281%29.png",
+                url: "https://www.youtube.com/watch?v=6tQNl6ZjDVc",
+                type: "youtube",
+                category: "streaming"
+            },
+            {
+                name: "AZZ",
+                logo: "https://i.ytimg.com/vi/G64h_SfQivc/maxresdefault.jpg",
+                url: "https://www.youtube.com/watch?v=wSjLZ2UTVxE",
+                type: "youtube",
+                category: "streaming"
+            },
+            {
+                name: "RADIO LA RED",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/6/64/Radio_La_Red_AM_910.png",
+                url: "https://manifest.googlevideo.com/api/manifest/hls_variant/expire/1725093971/ei/84PSZui8E_2V1d8P1fKfoAw/ip/240b%3A10%3Af00%3A1b00%3A4ed7%3Aeb3%3A16bc%3A78e7/id/9CYW1yCcSLU.1/source/yt_live_broadcast/requiressl/yes/xpc/EgVo2aDSNQ%3D%3D/hfr/1/playlist_duration/30/manifest_duration/30/maudio/1/spc/Mv1m9pe8Xm5bV1r9yLa5nVMRWnKkKRlKPrLmmmQntR9QApZ_U0ApKwJh0mqkqGI/vprv/1/go/1/rqh/5/pacing/0/nvgoi/1/keepalive/yes/dover/11/itag/0/playlist_type/DVR/sparams/expire%2Cei%2Cip%2Cid%2Csource%2Crequiressl%2Cxpc%2Chfr%2Cplaylist_duration%2Cmanifest_duration%2Cmaudio%2Cspc%2Cvprv%2Cgo%2Crqh%2Citag%2Cplaylist_type/sig/AJfQdSswRgIhAJjvR32TA0GCea70xf6Kg8PKUDJUvBvMmlVMq6MkM8znAiEApdgKU6YhG43HfIlciLfu6kZ28VgOLbolo7nXz7ueBKc%3D/file/index.m3u8",
+                type: "m3u8",
+                category: "streaming"
+            },
+            {
+                name: "URBANA PLAY",
+                logo: "https://kuarzo.com/wp-content/uploads/2023/04/Group-63-1.jpg",
+                url: "https://www.youtube.com/watch?v=F4ImcQ0Nb0w",
+                type: "youtube",
+                category: "streaming"
+            },
+            {
+                name: "Davoo Xeneize",
+                logo: "https://media.a24.com/p/7e84fe9f805ff79c5d6682fc89ac3f3a/adjuntos/296/imagenes/009/362/0009362916/1200x675/smart/davoxeneizejpg.jpg",
+                url: "https://kick.com/davooxeneize",
+                type: "kick",
+                category: "streaming"
+            }
+        ];
+
+        function createChannelButtons(category = 'all') {
+            channelList.innerHTML = '';
+            channels.forEach((channel, index) => {
+                if (category === 'all' || channel.category === category || (category === 'favoritos' && channel.favorite)) {
+                    const button = document.createElement('button');
+                    button.className = 'channel-button';
+                    button.innerHTML = `
+                        <img class="channel-logo" src="${channel.logo}" alt="${channel.name} logo">
+                        <span class="channel-name">${channel.name}</span>
+                        <div>
+                            <button class="play-button" title="Reproducir">▶</button>
+                        </div>
+                        <i class="fas fa-star favorite-star" title="Agregar a favoritos"></i>
+                    `;
+                    button.onclick = (event) => handleChannelButtonClick(event, index);
+                    channelList.appendChild(button);
+
+                    const favoriteStar = button.querySelector('.favorite-star');
+                    favoriteStar.style.color = channel.favorite ? '#ffd700' : '#ffffff';
+                    favoriteStar.onclick = (event) => {
+                        event.stopPropagation();
+                        toggleFavorite(index);
+                    };
+                }
+            });
+        }
+
+        function toggleFavorite(index) {
+            channels[index].favorite = !channels[index].favorite;
+            const currentCategory = document.querySelector('.category-button.active').dataset.category;
+            createChannelButtons(currentCategory);
+            saveChannelsToLocalStorage();
+        }
+
+        function saveChannelsToLocalStorage() {
+            localStorage.setItem('channels', JSON.stringify(channels));
+        }
+
+        function loadChannelsFromLocalStorage() {
+            const savedChannels = localStorage.getItem('channels');
+            if (savedChannels) {
+                const parsedChannels = JSON.parse(savedChannels);
+                channels.forEach((channel, index) => {
+                    if (parsedChannels[index]) {
+                        channel.favorite = parsedChannels[index].favorite;
+                    }
+                });
+            }
+        }
+
+        function handleChannelButtonClick(event, index) {
+            if (event.target.classList.contains('play-button')) {
+                event.stopPropagation();
+                loadChannel(index);
+            } else if (!event.target.classList.contains('favorite-star')) {
+                const currentTime = new Date().getTime();
+                const clickLength = currentTime - lastClickTime;
+                if (clickLength < 300 && clickLength > 0) {
+                    loadChannel(index);
+                    toggleFullscreen();
+                } else {
+                    loadChannel(index);
+                }
+                lastClickTime = currentTime;
+            }
+        }
+
+        async function loadChannel(index) {
+            currentChannelIndex = index;
+            const channel = channels[index];
+            
+            if (player) {
+                await player.unload();
+                player = null;
+            }
+
+            if (hls) {
+                hls.destroy();
+                hls = null;
+            }
+
+            videoPlayer.style.display = 'none';
+            youtubePlayer.style.display = 'none';
+            kickPlayer.style.display = 'none';
+            resolutionSelector.style.display = 'none';
+            audioSelector.style.display = 'none';
+
+            if (channel.type === 'mpd') {
+                videoPlayer.style.display = 'block';
+                resolutionSelector.style.display = 'block';
+                audioSelector.style.display = 'block';
+                player = new shaka.Player(videoPlayer);
+
+                try {
+                    const [key, value] = channel.licenseKey.split(':');
+                    player.configure({
+                        drm: {
+                            clearKeys: {
+                                [key]: value
+                            }
+                        }
+                    });
+
+                    await player.load(channel.url);
+                    videoPlayer.play();
+
+                    updateResolutionSelector();
+                    updateAudioSelector();
+                } catch (error) {
+                    console.error('Error loading video:', error);
+                }
+            } else if (channel.type === 'm3u8') {
+                videoPlayer.style.display = 'block';
+                if (Hls.isSupported()) {
+                    hls = new Hls();
+                    hls.loadSource(channel.url);
+                    hls.attachMedia(videoPlayer);
+                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                        videoPlayer.play();
+                        updateResolutionSelector();
+                    });
+                } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+                    videoPlayer.src = channel.url;
+                    videoPlayer.addEventListener('loadedmetadata', function() {
+                        videoPlayer.play();
+                    });
+                }
+            } else if (channel.type === 'youtube') {
+                youtubePlayer.style.display = 'block';
+                const videoId = channel.url.split('v=')[1];
+                youtubePlayer.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+            } else if (channel.type === 'kick') {
+                kickPlayer.style.display = 'block';
+                const channelName = channel.url.split('/').pop();
+                kickPlayer.src = `https://player.kick.com/${channelName}`;
+            }
+
+            channelInfoDiv.textContent = `Reproduciendo: ${channel.name}`;
+            channelInfoDiv.style.display = 'block';
+            setTimeout(() => {
+                channelInfoDiv.style.display = 'none';
+            }, 3000);
+
+            document.querySelectorAll('.channel-button').forEach((btn, idx) => {
+                btn.classList.toggle('active', idx === index);
+            });
+        }
+
+        function updateResolutionSelector() {
+            const tracks = player.getVariantTracks();
+            resolutionSelector.innerHTML = '';
+            const uniqueResolutions = [...new Set(tracks.map(track => track.height))];
+            uniqueResolutions.sort((a, b) => b - a);
+            uniqueResolutions.forEach(resolution => {
+                const option = document.createElement('option');
+                option.value = resolution;
+                option.text = `${resolution}p`;
+                resolutionSelector.add(option);
+            });
+        }
+
+        function updateAudioSelector() {
+            const tracks = player.getVariantTracks();
+            audioSelector.innerHTML = '';
+            const uniqueLanguages = [...new Set(tracks.map(track => track.language))];
+            uniqueLanguages.forEach(language => {
+                const option = document.createElement('option');
+                option.value = language;
+                option.text = language || 'Default';
+                audioSelector.add(option);
+            });
+        }
+
+        resolutionSelector.addEventListener('change', (event) => {
+            const height = Number(event.target.value);
+            const tracks = player.getVariantTracks();
+            const selectedTrack = tracks.find(track => track.height === height);
+            if (selectedTrack) {
+                player.selectVariantTrack(selectedTrack, true);
+            }
+        });
+
+        audioSelector.addEventListener('change', (event) => {
+            const language = event.target.value;
+            const tracks = player.getVariantTracks();
+            const selectedTrack = tracks.find(track => track.language === language);
+            if (selectedTrack) {
+                player.selectVariantTrack(selectedTrack, true);
+            }
+        });
+
+        categoryList.addEventListener('click', (event) => {
+            if (event.target.classList.contains('category-button')) {
+                const category = event.target.dataset.category;
+                createChannelButtons(category);
+                document.querySelectorAll('.category-button').forEach(btn => {
+                    btn.classList.toggle('active', btn === event.target);
+                });
+            }
+        });
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                if (videoPlayer.requestFullscreen) {
+                    videoPlayer.requestFullscreen();
+                } else if (videoPlayer.mozRequestFullScreen) {
+                    videoPlayer.mozRequestFullScreen();
+                } else if (videoPlayer.webkitRequestFullscreen) {
+                    videoPlayer.webkitRequestFullscreen();
+                } else if (videoPlayer.msRequestFullscreen) {
+                    videoPlayer.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        }
+
+        videoPlayer.addEventListener('dblclick', toggleFullscreen);
+        videoPlayer.addEventListener('touchend', (event) => {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTapTime;
+            if (tapLength < 300 && tapLength > 0) {
+                toggleFullscreen();
+            }
+            lastTapTime = currentTime;
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowUp') {
+                videoPlayer.volume = Math.min(videoPlayer.volume + 0.1, 1);
+            } else if (event.key === 'ArrowDown') {
+                videoPlayer.volume = Math.max(videoPlayer.volume - 0.1, 0);
+            } else if (event.key === 'ArrowLeft') {
+                loadChannel((currentChannelIndex - 1 + channels.length) % channels.length);
+            } else if (event.key === 'ArrowRight') {
+                loadChannel((currentChannelIndex + 1) % channels.length);
+            }
+        });
+
+        function animateTitle() {
+            const titleSpans = document.querySelectorAll('#mainTitle span');
+            titleSpans.forEach((span, index) => {
+                setTimeout(() => {
+                    span.style.opacity = '1';
+                    span.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        }
+
+        castButton.addEventListener('click', () => {
+            if ('presentation' in navigator) {
+                navigator.presentation.defaultRequest = new PresentationRequest(['cast.html']);
+                navigator.presentation.defaultRequest.start()
+                    .then(connection => {
+                        connection.addEventListener('connect', () => {
+                            connection.send(JSON.stringify({
+                                action: 'loadChannel',
+                                channelInfo: channels[currentChannelIndex]
+                            }));
+                        });
+                    })
+                    .catch(error => console.error('Error starting presentation:', error));
+            } else {
+                console.log('Web Presentation API not supported');
+            }
+        });
+
+        window.addEventListener('load', () => {
+            loadChannelsFromLocalStorage();
+            createChannelButtons();
+            animateTitle();
+            document.querySelector('.category-button[data-category="all"]').classList.add('active');
+        });
+
+        shaka.polyfill.installAll();
+    </script>
+</body>
+</html>
+
