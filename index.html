@@ -3,6 +3,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.0/shaka-player.compiled.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.0/shaka-player.ui.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.0/controls.min.css">
+    <script src="https://player.twitch.tv/js/embed/v1.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -11,7 +16,7 @@
         }
         body {
             font-family: 'Roboto', sans-serif;
-            background-image: url('https://upload.wikimedia.org/wikipedia/commons/8/86/El_futbol_y_la_luna_2024.jpg');
+            background-image: url('https://raw.githubusercontent.com/sissyblum/prueba2.github.io/f236587ef6672ff18eb78a7836983c6b61280156/0e3b8e39-e3b0-4029-abcf-30ab662b2c8a_20240830_011239_0000.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -103,7 +108,16 @@
             margin: 20px auto;
             position: relative;
         }
-        #videoPlayer, #youtubePlayer, #kickPlayer {
+        #videoPlayer, #youtubePlayer {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 16 / 9;
+            display: block;
+            box-shadow: 0 10px 30px rgba(0, 160, 233, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        #twitchPlayerDiv, #kickPlayerDiv {
             width: 100%;
             height: auto;
             aspect-ratio: 16 / 9;
@@ -151,10 +165,11 @@
             margin-top: 30px;
         }
         .channel-button {
+            position: relative;
+            padding-top: 30px;
             background-color: rgba(30, 30, 30, 0.8);
             color: #fff;
             border: none;
-            padding: 15px;
             cursor: pointer;
             border-radius: 12px;
             display: flex;
@@ -163,6 +178,27 @@
             transition: all 0.3s ease;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             position: relative;
+        }
+        .favorite-button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            z-index: 1;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            color: #ffffff;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+        .favorite-button:hover {
+            transform: scale(1.2);
+            opacity: 1;
+        }
+        .favorite-button.active {
+            color: #ffd700;
+            opacity: 1;
         }
         .channel-button:hover, .channel-button:focus {
             background-color: rgba(42, 42, 42, 0.9);
@@ -203,18 +239,6 @@
         .play-button:hover {
             background-color: rgba(255,255,255,0.2);
             transform: scale(1.1);
-        }
-        .favorite-star {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            font-size: 1.2em;
-            color: #ffd700;
-            cursor: pointer;
-            transition: transform 0.3s ease;
-        }
-        .favorite-star:hover {
-            transform: scale(1.2);
         }
         #channelInfo {
             position: fixed;
@@ -302,15 +326,10 @@
                 padding: 6px 12px;
             }
         }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        @keyframes glow {
-            0% { box-shadow: 0 0 5px rgba(0, 160, 233, 0.5); }
-            50% { box-shadow: 0 0 20px rgba(0, 160, 233, 0.8); }
-            100% { box-shadow: 0 0 5px rgba(0, 160, 233, 0.5); }
+        #kickPlayerDiv {
+            display: none;
+            width: 100%;
+            height: 100%;
         }
     </style>
 </head>
@@ -331,21 +350,23 @@
             <span id="whatsappNumber">1125875444</span>
         </div>
     </a>
-
+    
     <div id="categoryList">
         <button class="category-button" data-category="all">TODOS</button>
         <button class="category-button" data-category="deportes">DEPORTES</button>
+        <button class="category-button" data-category="infantiles">INFANTILES</button>
         <button class="category-button" data-category="pack-futbol">PACK FÚTBOL</button>
         <button class="category-button" data-category="cine">CINE</button>
         <button class="category-button" data-category="noticias">NOTICIAS</button>
         <button class="category-button" data-category="streaming">STREAMING</button>
-        <button class="category-button" data-category="favoritos">FAVORITOS</button>
+        <button class="category-button" data-category="favorites">FAVORITOS</button>
     </div>
 
     <div id="videoContainer">
         <video id="videoPlayer" controls playsinline></video>
-        <iframe id="youtubePlayer" style="display:none" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
-        <iframe id="kickPlayer" style="display:none" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
+        <iframe id="youtubePlayer" style="display:none" width="100%" height="100%" frameborder="0"></iframe>
+        <div id="twitchPlayerDiv" style="display:none; width:100%; height:100%;"></div>
+        <div id="kickPlayerDiv" style="display:none; width:100%; height:100%;"></div>
         <select id="resolutionSelector">
             <option value="1080">1080p</option>
             <option value="720">720p</option>
@@ -362,80 +383,105 @@
     <div id="channelList"></div>
     <div id="channelInfo"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.3.0/dist/shaka-player.compiled.min.js"></script>
     <script>
-        const videoPlayer = document.getElementById('videoPlayer');
-        const youtubePlayer = document.getElementById('youtubePlayer');
-        const kickPlayer = document.getElementById('kickPlayer');
-        const channelList = document.getElementById('channelList');
-        const channelInfoDiv = document.getElementById('channelInfo');
-        const resolutionSelector = document.getElementById('resolutionSelector');
-        const audioSelector = document.getElementById('audioSelector');
-        const categoryList = document.getElementById('categoryList');
-        const castButton = document.getElementById('castButton');
-        let player;
-        let currentChannelIndex = 0;
-        let lastTapTime = 0;
-        let lastClickTime = 0;
-        let hls;
+        let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+        let kickPlayer;
 
-        const channels = [
-        {
-                name: "TYC SPORTS",
-                logo: "https://i.ibb.co/MN7HcLq/tycsports.png",
-                licenseKey: "2b21c8fa9a329cce311a4c4a4aa996a1:cc23ea1fb32629f9e1f48c8deeae3e5b",
-                url: "https://edge-mix02-mun.cvattv.com.ar/live/c7eds/TyCSport/SA_Live_dash_enc/TyCSport.mpd",
-                type: "mpd",
-                category: "deportes"
-            },
-            {
-                name: "LUZU TV",
-                logo: "https://upload.wikimedia.org/wikipedia/commons/5/52/LuzuTV_%281%29.png",
-                url: "https://www.youtube.com/watch?v=6tQNl6ZjDVc",
-                type: "youtube",
-                category: "streaming"
-            },
-            {
-                name: "AZZ",
-                logo: "https://i.ytimg.com/vi/G64h_SfQivc/maxresdefault.jpg",
-                url: "https://www.youtube.com/watch?v=wSjLZ2UTVxE",
-                type: "youtube",
-                category: "streaming"
-            },
-            {
-                name: "RADIO LA RED",
-                logo: "https://upload.wikimedia.org/wikipedia/commons/6/64/Radio_La_Red_AM_910.png",
-                url: "https://ythls-v3.onrender.com/channel/UCTHaNTsP7hsVgBxARZTuajw.m3u8",
-                type: "m3u8",
-                category: "streaming"
-            },
-            {
-                name: "URBANA PLAY",
-                logo: "https://kuarzo.com/wp-content/uploads/2023/04/Group-63-1.jpg",
-                url: "https://www.youtube.com/watch?v=F4ImcQ0Nb0w",
-                type: "youtube",
-                category: "streaming"
-            },
-            {
-                name: "Davoo Xeneize",
-                logo: "https://media.a24.com/p/7e84fe9f805ff79c5d6682fc89ac3f3a/adjuntos/296/imagenes/009/362/0009362916/1200x675/smart/davoxeneizejpg.jpg",
-                url: "https://kick.com/davooxeneize",
-                type: "kick",
-                category: "streaming"
+        function toggleFavorite(index) {
+            const favoriteIndex = favorites.indexOf(index);
+            if (favoriteIndex === -1) {
+                favorites.push(index);
+            } else {
+                favorites.splice(favoriteIndex, 1);
             }
-        ];
+            localStorage.setItem('favorites', JSON.stringify(favorites));
+            updateFavoriteButtons();
+            if (document.querySelector('.category-button[data-category="favorites"].active')) {
+                createChannelButtons('favorites');
+            }
+        }
 
-        function loadChannelsFromLocalStorage() {
-            const savedChannels = localStorage.getItem('channels');
-            if (savedChannels) {
-                const parsedChannels = JSON.parse(savedChannels);
-                channels.forEach((channel, index) => {
-                    if (parsedChannels[index]) {
-                        channel.favorite = parsedChannels[index].favorite;
-                    }
-                });
-            }
+        function updateFavoriteButtons() {
+            document.querySelectorAll('.favorite-button').forEach((button, index) => {
+                if (favorites.includes(index)) {
+                    button.classList.add('active');
+                    button.innerHTML = '<i class="fas fa-star"></i>';
+                } else {
+                    button.classList.remove('active');
+                    button.innerHTML = '<i class="far fa-star"></i>';
+                }
+            });
+        }
+
+        function createChannelButtons(category = 'all') {
+            channelList.innerHTML = '';
+            channels.forEach((channel, index) => {
+                if (category === 'all' || 
+                    (category === 'favorites' && favorites.includes(index)) || 
+                    channel.category === category) {
+                    const button = document.createElement('button');
+                    button.classList.add('channel-button');
+                    
+                    const favoriteButton = document.createElement('button');
+                    favoriteButton.classList.add('favorite-button');
+                    favoriteButton.innerHTML = '<i class="far fa-star"></i>';
+                    favoriteButton.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        toggleFavorite(index);
+                    });
+                    
+                    button.innerHTML = `
+                        <img src="${channel.logo}" alt="${channel.name}" class="channel-logo">
+                        <span class="channel-name">${channel.name}</span>
+                    `;
+                    button.addEventListener('click', () => loadChannel(index));
+                    
+                    // Add double-click event listener
+                    button.addEventListener('dblclick', (event) => {
+                        event.preventDefault();
+                        loadChannel(index);
+                        setTimeout(() => {
+                            const playerElement = getActivePlayerElement();
+                            if (playerElement) {
+                                toggleFullScreen(playerElement);
+                            }
+                        }, 100);
+                    });
+                    
+                    const playButton = document.createElement('button');
+                    playButton.classList.add('play-button');
+                    playButton.innerHTML = '<i class="fas fa-play"></i>';
+                    playButton.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        loadChannel(index);
+                    });
+                    
+                    button.appendChild(favoriteButton);
+                    button.appendChild(playButton);
+                    channelList.appendChild(button);
+                }
+            });
+            updateFavoriteButtons();
+        }
+
+        // Helper function to get the active player element
+        function getActivePlayerElement() {
+            if (videoPlayer.style.display !== 'none') return videoPlayer;
+            if (youtubePlayer.style.display !== 'none') return youtubePlayer;
+            if (twitchPlayerDiv.style.display !== 'none') return twitchPlayerDiv;
+            if (kickPlayerDiv.style.display !== 'none') return kickPlayerDiv;
+            return null;
+        }
+
+        function animateTitle() {
+            const title = document.getElementById('mainTitle');
+            const spans = title.querySelectorAll('span');
+            spans.forEach((span, index) => {
+                setTimeout(() => {
+                    span.style.opacity = '1';
+                    span.style.transform = 'translateY(0)';
+                }, index * 200);
+            });
         }
 
         function animateWhatsAppInfo() {
@@ -469,290 +515,532 @@
             animateWhatsAppInfo();
             document.querySelector('.category-button[data-category="all"]').classList.add('active');
         });
+        
+// Función para detectar si el dispositivo es móvil
+function isMobile() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
 
-        function createChannelButtons(category = 'all') {
-            channelList.innerHTML = '';
-            channels.forEach((channel, index) => {
-                if (category === 'all' || channel.category === category || (category === 'favoritos' && channel.favorite)) {
-                    const button = document.createElement('button');
-                    button.className = 'channel-button';
-                    button.innerHTML = `
-                        <img class="channel-logo" src="${channel.logo}" alt="${channel.name} logo">
-                        <span class="channel-name">${channel.name}</span>
-                        <div>
-                            <button class="play-button" title="Reproducir">▶</button>
-                        </div>
-                        <i class="fas fa-star favorite-star" title="Agregar a favoritos"></i>
-                    `;
-                    button.onclick = (event) => handleChannelButtonClick(event, index);
-                    channelList.appendChild(button);
+// Función para manejar la pantalla completa en dispositivos móviles
+function handleMobileFullscreen(element) {
+    if (document.fullscreenElement) {
+        document.exitFullscreen();
+    } else if (element.requestFullscreen) {
+        element.requestFullscreen();
+    } else if (element.webkitRequestFullscreen) { // Safari
+        element.webkitRequestFullscreen();
+    } else if (element.msRequestFullscreen) { // IE11
+        element.msRequestFullscreen();
+    }
+}
 
-                    const favoriteStar = button.querySelector('.favorite-star');
-                    favoriteStar.style.color = channel.favorite ? '#ffd700' : '#ffffff';
-                    favoriteStar.onclick = (event) => {
-                        event.stopPropagation();
-                        toggleFavorite(index);
-                    };
+        function toggleFullScreen(element) {
+    if (!document.fullscreenElement) {
+        const requestFullscreen = element.requestFullscreen || element.mozRequestFullScreen || element.webkitRequestFullscreen || element.msRequestFullscreen;
+        if (requestFullscreen) {
+            requestFullscreen.call(element).catch(err => {
+                console.warn(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+            });
+        }
+    } else {
+        const exitFullscreen = document.exitFullscreen || document.mozCancelFullScreen || document.webkitExitFullscreen || document.msExitFullscreen;
+        if (exitFullscreen) {
+            exitFullscreen.call(document).catch(err => {
+                console.warn(`Error attempting to exit full-screen mode: ${err.message} (${err.name})`);
+            });
+        }
+    }
+}
+
+window.addEventListener('load', () => {
+    createChannelButtons();
+    animateTitle();
+    animateWhatsAppInfo();
+    document.querySelector('.category-button[data-category="all"]').classList.add('active');
+    updateFavoriteButtons();
+});
+
+shaka.polyfill.installAll();
+const videoPlayer = document.getElementById('videoPlayer');
+const youtubePlayer = document.getElementById('youtubePlayer');
+const twitchPlayerDiv = document.getElementById('twitchPlayerDiv');
+const kickPlayerDiv = document.getElementById('kickPlayerDiv');
+const channelList = document.getElementById('channelList');
+const channelInfoDiv = document.getElementById('channelInfo');
+const resolutionSelector = document.getElementById('resolutionSelector');
+const audioSelector = document.getElementById('audioSelector');
+const categoryList = document.getElementById('categoryList');
+const castButton = document.getElementById('castButton');
+let player;
+let hls;
+let currentChannelIndex = 0;
+let lastTapTime = 0;
+let lastClickTime = 0;
+let currentPlayerType = null;
+let twitchPlayer;
+
+const channels = [
+    {
+                name: "ESPN PREMIUM",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/4/4a/Espnpremium_%281%29.jpg",
+                licenseKey: "4c230dbc7f6a4bfa6ad0aa73ff792374:4186a7c2a15f590a9399886feaec4257",
+                url: "https://edge-live15-hr.cvattv.com.ar/live/c4eds/Fox_Sports_Premiun_HD/SA_Live_dash_enc/Fox_Sports_Premiun_HD.mpd",
+                type: "mpd",
+                category: "pack-futbol"
+            },
+            {
+                name: "TNT SPORTS",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/e/e0/TNT_Sports_logo_2021_%281%29.png",
+                licenseKey: "bc80fa3da696e503f940fde5f681a1c5:ea46e4e9f1132e8dd71fb77f7d55058a",
+                url: "https://edge-live31-hr.cvattv.com.ar/live/c3eds/TNT_Sports_HD/SA_Live_dash_enc/TNT_Sports_HD.mpd",
+                type: "mpd",
+                category: "pack-futbol"
+            },
+            {
+                name: "TYC SPORTS",
+                logo: "https://i.ibb.co/MN7HcLq/tycsports.png",
+                licenseKey: "2b21c8fa9a329cce311a4c4a4aa996a1:cc23ea1fb32629f9e1f48c8deeae3e5b",
+                url: "https://edge-mix02-mun.cvattv.com.ar/live/c7eds/TyCSport/SA_Live_dash_enc/TyCSport.mpd",
+                type: "mpd",
+                category: "deportes"
+            },
+            {
+                name: "TN",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/f/fb/Tn_piola_%281%29.png",
+                licenseKey: "7ceb1cd0622cd7e88fcdc99fe3a55de6:951637093d41c7388a1ef3f620cfea21",
+                url: "https://edge-live17-hr.cvattv.com.ar/live/c4eds/TodoNoticias/SA_Live_dash_enc/TodoNoticias.mpd",
+                type: "mpd",
+                category: "noticias"
+            },
+            {
+                name: "Eventos 1 HD",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/a/a6/Flow_2021.jpg",
+                licenseKey: "5c86e237317c2231ac1bc130e995fad6:dcacf7b239ee03df3c69ca11dbcde4eb",
+                url: "https://edge-mix02-mun.cvattv.com.ar/live/c3eds/Eventos1HD/SA_Live_dash_enc/Eventos1HD.mpd",
+                type: "mpd",
+                category: "deportes"
+            },
+            {
+                name: "DGO SPORTS",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/2/2b/Logo-directv-sports_4x3_final_%281%29.png",
+                url: "https://dr.jellyfin.es/nonton/samples/magma/312.m3u8",
+                type: "m3u8",
+                category: "deportes"
+            },
+            {
+                name: "HBO",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/6/60/Hbo_%281%29.png",
+                licenseKey: "5317283f4110fac3fb3a0becd9f648bc:0754a03c926b1247216e01d9dbcfac28",
+                url: "https://edge-live18-sl.cvattv.com.ar/live/c4eds/HBOHD/SA_Live_dash_enc/HBOHD.mpd",
+                type: "mpd",
+                category: "cine"
+            },
+            {
+                name: "HBO 2",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/6/60/Hbo_%281%29.png",
+                licenseKey: "c90cc57ad2c436e5a77db2f8d9db2d85:04f6c73984bdcffd013050608497935d",
+                url: "https://edge-live13-sl.cvattv.com.ar/live/c6eds/HBO_2/SA_Live_dash_enc/HBO_2.mpd",
+                type: "mpd",
+                category: "cine"
+            },
+            {
+                name: "HBO PLUS",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/6/60/Hbo_%281%29.png",
+                licenseKey: "f0e7f7d458990edfab7b98b412564615:79205754b7f84a62661c2dbe9de5dd5d",
+                url: "https://edge-live15-hr.cvattv.com.ar/live/c6eds/HBO_Plus/SA_Live_dash_enc/HBO_Plus.mpd",
+                type: "mpd",
+                category: "cine"
+            },
+            {
+                name: "HBO FAMILY",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/6/60/Hbo_%281%29.png",
+                licenseKey: "535473132f68082160b489482ca35f8e:e90fd91fcd3fc809bed2b1c0d37f7297",
+                url: "https://edge-live13-sl.cvattv.com.ar/live/c6eds/HBO_Family/SA_Live_dash_enc/HBO_Family.mpd",
+                type: "mpd",
+                category: "cine"
+            },
+            {
+                name: "HBO SIGNATURE",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/6/60/Hbo_%281%29.png",
+                licenseKey: "e866499fbc1149f49989672075aa3a68:d2dd5c95623c6343240981c2202fc311",
+                url: "https://edge-live16-sl.cvattv.com.ar/live/c6eds/HBO_Signature/SA_Live_dash_enc/HBO_Signature.mpd",
+                type: "mpd",
+                category: "cine"
+            },
+            {
+                name: "HBO POP",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/6/60/Hbo_%281%29.png",
+                licenseKey: "f4e1ce5cef7e9a110fe968f8881b21fa:6bbe2062b150b11496cdd5fbdd9c89d6",
+                url: "https://edge-live11-hr.cvattv.com.ar/live/c7eds/HBO_POP/SA_Live_dash_enc/HBO_POP.mpd",
+                type: "mpd",
+                category: "cine"
+            },
+            {
+                name: "HBO XTREME",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/6/60/Hbo_%281%29.png",
+                licenseKey: "d504011bbef467c0de3a7534e302a6d4:334103e2abe16faa7f9ab2e3097c5a58",
+                url: "https://edge-live13-sl.cvattv.com.ar/live/c6eds/HBO_Extreme/SA_Live_dash_enc/HBO_Extreme.mpd",
+                type: "mpd",
+                category: "cine"
+            },
+            {
+                name: "HBO MUNDI",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/6/60/Hbo_%281%29.png",
+                licenseKey: "7821b2662148fe333d5191acbb8a5c1f:ae43f3e2545237ebda58b13813b5d328",
+                url: "https://edge-live11-sl.cvattv.com.ar/live/c6eds/HBO_Mundi/SA_Live_dash_enc/HBO_Mundi.mpd",
+                type: "mpd",
+                category: "cine"
+            },
+            {
+                name: "Neo TV Digital",
+                logo: "https://github.com/sissyblum/prueba2.github.io/blob/479b06acfbb803a2a8920c398b6428043640290c/images%20(1).jpg",
+                url: "https://videostream.shockmedia.com.ar:19360/neotvdigital/neotvdigital.m3u8",
+                type: "m3u8",
+                category: "streaming"
+            },
+            {
+                name: "LUZU TV",
+                logo: "https://static-cdn.jtvnw.net/jtv_user_pictures/3a60f4f8-4803-4f19-9f3f-27424e461c52-profile_image-300x300.png",
+                twitchChannel: "luzu_tv",
+                type: "twitch",
+                category: "streaming"
+            },
+            {
+                name: "OLGA",
+                logo: "https://static-cdn.jtvnw.net/jtv_user_pictures/3a60f4f8-4803-4f19-9f3f-27424e461c52-profile_image-300x300.png",
+                twitchChannel: "olgaenvivo",
+                type: "twitch",
+                category: "streaming"
+            },
+            {
+                name: "UN POCO DE RUIDO (MIERCOLES 21:00HS)",
+                logo: "https://static-cdn.jtvnw.net/jtv_user_pictures/3a60f4f8-4803-4f19-9f3f-27424e461c52-profile_image-300x300.png",
+                twitchChannel: "pinkyrec",
+                type: "twitch",
+                category: "streaming"
+            },
+            {
+                name: "Coscu",
+                logo: "https://images.kick.com/user_logos/davooxeneize/YQzL1Zzp_400x400.jpg",
+                url: "https://player.kick.com/coscu",
+                type: "kick",
+                category: "streaming"
+            },
+            {
+                name: "UN POCO DE RUIDO (ZAPADAS)",
+                logo: "https://i.ytimg.com/vi/G64h_SfQivc/maxresdefault.jpg",
+                url: "https://youtu.be/h4KB9xYASTI?si=ifbca9O364449AFa",
+                type: "youtube",
+                category: "streaming"
+            },
+            {
+                name: "LOS SIMPSONS 24/7",
+                logo: "path_to_infantil_logo.png",
+                url: 'https://corsproxy.io/?' + encodeURIComponent("https://dr.jellyfin.es/nonton/samples/magma/633.m3u8"),
+                type: "m3u8",
+                category: "infantiles"
+            },
+            {
+                name: "DGO SPORTS",
+                logo: "path_to_infantil_logo.png",
+                url: 'https://corsproxy.io/?' + encodeURIComponent("https://dr.jellyfin.es/nonton/samples/magma/312.m3u8"),
+                type: "m3u8",
+                category: "deportes"
+            }
+        ];
+
+        async function loadChannel(index) {
+    currentChannelIndex = index;
+    const channel = channels[index];
+
+    if (!channel) {
+        console.error('Invalid channel index');
+        return;
+    }
+
+    if (currentPlayerType === 'kick' && kickPlayer) {
+        kickPlayer.remove();
+        kickPlayer = null;
+    }
+
+    if (currentPlayerType === 'youtube') {
+        if (youtubePlayer && youtubePlayer.contentWindow) {
+            youtubePlayer.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+        }
+if (isMobile()) {
+                youtubePlayer.addEventListener('dblclick', (e) => {
+                    e.preventDefault();
+                    handleMobileFullscreen(youtubePlayer);
+                });
+            } else {
+                youtubePlayer.addEventListener('dblclick', (e) => {
+                    e.preventDefault();
+                    if (document.fullscreenElement) {
+                        toggleFullScreen(document.fullscreenElement);
+                    } else {
+                        toggleFullScreen(youtubePlayer);
+                    }
+                });
+            }
+    } else if (currentPlayerType === 'twitch') {
+        if (twitchPlayer) {
+            twitchPlayer.pause();
+        }
+    } else if (currentPlayerType === 'mpd' || currentPlayerType === 'm3u8') {
+        if (player) {
+            try {
+                await player.unload();
+            } catch (error) {
+                console.error('Error unloading player:', error);
+            }
+        }
+        if (hls) {
+            hls.destroy();
+        }
+    }
+
+    if (videoPlayer) videoPlayer.style.display = 'none';
+    if (youtubePlayer) youtubePlayer.style.display = 'none';
+    if (twitchPlayerDiv) twitchPlayerDiv.style.display = 'none';
+    if (kickPlayerDiv) kickPlayerDiv.style.display = 'none';
+    if (resolutionSelector) resolutionSelector.style.display = 'none';
+    if (audioSelector) audioSelector.style.display = 'none';
+
+    currentPlayerType = channel.type;
+
+    try {
+        if (channel.type === 'mpd') {
+            if (!videoPlayer) {
+                console.error('Video player element not found');
+                return;
+            }
+            videoPlayer.style.display = 'block';
+            if (resolutionSelector) resolutionSelector.style.display = 'block';
+            if (audioSelector) audioSelector.style.display = 'block';
+
+            if (!player) {
+                player = new shaka.Player(videoPlayer);
+            }
+
+            if (channel.licenseKey) {
+                const [keyId, key] = channel.licenseKey.split(':');
+                player.configure({
+                    drm: {
+                        clearKeys: {
+                            [keyId]: key
+                        }
+                    }
+                });
+            }
+
+            player.configure({
+                streaming: {
+                    bufferingGoal: 10,
+                    rebufferingGoal: 5,
+                    bufferBehind: 30,
+                    lowLatencyMode: true,
+                    jumpLargeGaps: true
+                },
+                abr: {
+                    enabled: true,
+                    defaultBandwidthEstimate: 1000000
+                }
+            });
+
+            player.addEventListener('error', onErrorEvent);
+            await player.load(channel.url);
+            videoPlayer.play();
+
+            updateAudioOptions();
+
+            videoPlayer.addEventListener('dblclick', (e) => {
+                e.preventDefault();
+                toggleFullScreen(videoPlayer);
+            });
+        } else if (channel.type === 'm3u8') {
+            if (!videoPlayer) {
+                console.error('Video player element not found');
+                return;
+            }
+            videoPlayer.style.display = 'block';
+            if (Hls.isSupported()) {
+                hls = new Hls();
+                hls.loadSource(channel.url);
+                hls.attachMedia(videoPlayer);
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    videoPlayer.play();
+                    updateAudioOptions();
+                });
+            } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+                videoPlayer.src = channel.url;
+                videoPlayer.addEventListener('loadedmetadata', function() {
+                    videoPlayer.play();
+                });
+            }
+
+            videoPlayer.addEventListener('dblclick', (e) => {
+                e.preventDefault();
+                toggleFullScreen(videoPlayer);
+            });
+        } else if (channel.type === 'youtube') {
+            if (!youtubePlayer) {
+                console.error('YouTube player element not found');
+                return;
+            }
+            youtubePlayer.style.display = 'block';
+            const videoId = getYouTubeVideoId(channel.url);
+            youtubePlayer.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1`;
+
+            youtubePlayer.addEventListener('dblclick', (e) => {
+                e.preventDefault();
+                if (document.fullscreenElement) {
+                    toggleFullScreen(document.fullscreenElement);
+                } else {
+                    toggleFullScreen(youtubePlayer);
+                }
+            });
+        } else if (channel.type === 'twitch') {
+            if (!twitchPlayerDiv) {
+                console.error('Twitch player element not found');
+                return;
+            }
+            twitchPlayerDiv.style.display = 'block';
+            const options = {
+                width: '100%',
+                height: '100%',
+                channel: channel.twitchChannel
+            };
+            if (twitchPlayer) {
+                twitchPlayer.setChannel(channel.twitchChannel);
+            } else {
+                twitchPlayer = new Twitch.Player("twitchPlayerDiv", options);
+                twitchPlayer.play();
+            }
+            
+            twitchPlayerDiv.addEventListener('dblclick', (e) => {
+                e.preventDefault();
+                if (document.fullscreenElement) {
+                    toggleFullScreen(document.fullscreenElement);
+                } else {
+                    toggleFullScreen(twitchPlayerDiv);
+                }
+            });
+        } else if (channel.type === 'kick') {
+            if (!kickPlayerDiv) {
+                console.error('Kick player not found');
+                return;
+            }
+            kickPlayerDiv.style.display = 'block';
+            kickPlayer = document.createElement('iframe');
+            kickPlayer.src = `${channel.url}`;
+            kickPlayer.width = '100%';
+            kickPlayer.height = '100%';
+            kickPlayer.frameBorder = '0';
+            kickPlayer.scrolling = 'no';
+            kickPlayer.allowFullscreen = false;
+            kickPlayerDiv.innerHTML = '';
+            kickPlayerDiv.appendChild(kickPlayer);
+
+            kickPlayerDiv.addEventListener('dblclick', (e) => {
+                e.preventDefault();
+                if (document.fullscreenElement) {
+                    toggleFullScreen(document.fullscreenElement);
+                } else {
+                    toggleFullScreen(kickPlayerDiv);
                 }
             });
         }
 
-        function toggleFavorite(index) {
-            channels[index].favorite = !channels[index].favorite;
-            const currentCategory = document.querySelector('.category-button.active').dataset.category;
-            createChannelButtons(currentCategory);
-            saveChannelsToLocalStorage();
-        }
-
-        function saveChannelsToLocalStorage() {
-            localStorage.setItem('channels', JSON.stringify(channels));
-        }
-
-        function loadChannelsFromLocalStorage() {
-            const savedChannels = localStorage.getItem('channels');
-            if (savedChannels) {
-                const parsedChannels = JSON.parse(savedChannels);
-                channels.forEach((channel, index) => {
-                    if (parsedChannels[index]) {
-                        channel.favorite = parsedChannels[index].favorite;
-                    }
-                });
-            }
-        }
-
-        function handleChannelButtonClick(event, index) {
-            if (event.target.classList.contains('play-button')) {
-                event.stopPropagation();
-                loadChannel(index);
-            } else if (!event.target.classList.contains('favorite-star')) {
-                const currentTime = new Date().getTime();
-                const clickLength = currentTime - lastClickTime;
-                if (clickLength < 300 && clickLength > 0) {
-                    loadChannel(index);
-                    toggleFullscreen();
-                } else {
-                    loadChannel(index);
-                }
-                lastClickTime = currentTime;
-            }
-        }
-
-        async function loadChannel(index) {
-            currentChannelIndex = index;
-            const channel = channels[index];
-            
-            if (player) {
-                await player.unload();
-                player = null;
-            }
-
-            if (hls) {
-                hls.destroy();
-                hls = null;
-            }
-
-            videoPlayer.style.display = 'none';
-            youtubePlayer.style.display = 'none';
-            kickPlayer.style.display = 'none';
-            resolutionSelector.style.display = 'none';
-            audioSelector.style.display = 'none';
-
-            if (channel.type === 'mpd') {
-                videoPlayer.style.display = 'block';
-                resolutionSelector.style.display = 'block';
-                audioSelector.style.display = 'block';
-                player = new shaka.Player(videoPlayer);
-
-                try {
-                    const [key, value] = channel.licenseKey.split(':');
-                    player.configure({
-                        drm: {
-                            clearKeys: {
-                                [key]: value
-                            }
-                        }
-                    });
-
-                    await player.load(channel.url);
-                    videoPlayer.play();
-
-                    updateResolutionSelector();
-                    updateAudioSelector();
-                } catch (error) {
-                    console.error('Error loading video:', error);
-                }
-            } else if (channel.type === 'm3u8') {
-                videoPlayer.style.display = 'block';
-                if (Hls.isSupported()) {
-                    hls = new Hls();
-                    hls.loadSource(channel.url);
-                    hls.attachMedia(videoPlayer);
-                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                        videoPlayer.play();
-                        updateResolutionSelector();
-                    });
-                } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
-                    videoPlayer.src = channel.url;
-                    videoPlayer.addEventListener('loadedmetadata', function() {
-                        videoPlayer.play();
-                    });
-                }
-            } else if (channel.type === 'youtube') {
-                youtubePlayer.style.display = 'block';
-                const videoId = channel.url.split('v=')[1];
-                youtubePlayer.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-            } else if (channel.type === 'kick') {
-                kickPlayer.style.display = 'block';
-                const channelName = channel.url.split('/').pop();
-                kickPlayer.src = `https://player.kick.com/${channelName}`;
-            }
-
+        if (channelInfoDiv) {
             channelInfoDiv.textContent = `Reproduciendo: ${channel.name}`;
             channelInfoDiv.style.display = 'block';
             setTimeout(() => {
                 channelInfoDiv.style.display = 'none';
             }, 3000);
-
-            document.querySelectorAll('.channel-button').forEach((btn, idx) => {
-                btn.classList.toggle('active', idx === index);
-            });
         }
 
-        function updateResolutionSelector() {
-            const tracks = player.getVariantTracks();
-            resolutionSelector.innerHTML = '';
-            const uniqueResolutions = [...new Set(tracks.map(track => track.height))];
-            uniqueResolutions.sort((a, b) => b - a);
-            uniqueResolutions.forEach(resolution => {
-                const option = document.createElement('option');
-                option.value = resolution;
-                option.text = `${resolution}p`;
-                resolutionSelector.add(option);
-            });
-        }
-
-        function updateAudioSelector() {
-            const tracks = player.getVariantTracks();
-            audioSelector.innerHTML = '';
-            const uniqueLanguages = [...new Set(tracks.map(track => track.language))];
-            uniqueLanguages.forEach(language => {
-                const option = document.createElement('option');
-                option.value = language;
-                option.text = language || 'Default';
-                audioSelector.add(option);
-            });
-        }
-
-        resolutionSelector.addEventListener('change', (event) => {
-            const height = Number(event.target.value);
-            const tracks = player.getVariantTracks();
-            const selectedTrack = tracks.find(track => track.height === height);
-            if (selectedTrack) {
-                player.selectVariantTrack(selectedTrack, true);
-            }
+        document.querySelectorAll('.channel-button').forEach((btn, idx) => {
+            btn.classList.toggle('active', idx === index);
         });
+    } catch (error) {
+        console.error('Error loading channel:', error);
+    }
+}
 
-        audioSelector.addEventListener('change', (event) => {
-            const language = event.target.value;
-            const tracks = player.getVariantTracks();
-            const selectedTrack = tracks.find(track => track.language === language);
-            if (selectedTrack) {
-                player.selectVariantTrack(selectedTrack, true);
-            }
+function getYouTubeVideoId(url) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+}
+
+function onErrorEvent(event) {
+    onError(event.detail);
+}
+
+function onError(error) {
+    console.error('Error code', error.code, 'object', error);
+}
+
+function updateAudioOptions() {
+    const tracks = player.getAudioLanguages();
+    audioSelector.innerHTML = '';
+    if (tracks.length > 1) {
+        tracks.forEach(language => {
+            const option = document.createElement('option');
+            option.value = language;
+            option.text = language === 'es' ? 'Español' : (language === 'en' ? 'English' : language);
+            audioSelector.add(option);
         });
+        audioSelector.style.display = 'block';
+    } else {
+        audioSelector.style.display = 'none';
+    }
+}
 
-        categoryList.addEventListener('click', (event) => {
-            if (event.target.classList.contains('category-button')) {
-                const category = event.target.dataset.category;
-                createChannelButtons(category);
-                document.querySelectorAll('.category-button').forEach(btn => {
-                    btn.classList.toggle('active', btn === event.target);
-                });
-            }
+audioSelector.addEventListener('change', (event) => {
+    const language = event.target.value;
+    player.selectAudioLanguage(language);
+});
+
+resolutionSelector.addEventListener('change', (event) => {
+    const height = Number(event.target.value);
+    const tracks = player.getVariantTracks();
+    const selectedTrack = tracks.find(track => track.height === height);
+    if (selectedTrack) {
+        player.selectVariantTrack(selectedTrack, true);
+    }
+});
+
+categoryList.addEventListener('click', (event) => {
+    if (event.target.classList.contains('category-button')) {
+        const category = event.target.dataset.category;
+        document.querySelectorAll('.category-button').forEach(button => {
+            button.classList.remove('active');
         });
+        event.target.classList.add('active');
+        createChannelButtons(category);
+    }
+});
 
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                if (videoPlayer.requestFullscreen) {
-                    videoPlayer.requestFullscreen();
-                } else if (videoPlayer.mozRequestFullScreen) {
-                    videoPlayer.mozRequestFullScreen();
-                } else if (videoPlayer.webkitRequestFullscreen) {
-                    videoPlayer.webkitRequestFullscreen();
-                } else if (videoPlayer.msRequestFullscreen) {
-                    videoPlayer.msRequestFullscreen();
-                }
+let lastTap = 0;
+document.getElementById('videoContainer').addEventListener('touchend', function(event) {
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTap;
+    if (tapLength < 500 && tapLength > 0) {
+        event.preventDefault();
+        const targetElement = event.target.closest('video, iframe, #twitchPlayerDiv, #kickPlayerDiv') || event.target;
+        if (isMobile()) {
+            handleMobileFullscreen(targetElement);
+        } else {
+            if (document.fullscreenElement) {
+                toggleFullScreen(document.fullscreenElement);
             } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                }
+                toggleFullScreen(targetElement);
             }
         }
-
-        videoPlayer.addEventListener('dblclick', toggleFullscreen);
-        videoPlayer.addEventListener('touchend', (event) => {
-            const currentTime = new Date().getTime();
-            const tapLength = currentTime - lastTapTime;
-            if (tapLength < 300 && tapLength > 0) {
-                toggleFullscreen();
-            }
-            lastTapTime = currentTime;
-        });
-
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'ArrowUp') {
-                videoPlayer.volume = Math.min(videoPlayer.volume + 0.1, 1);
-            } else if (event.key === 'ArrowDown') {
-                videoPlayer.volume = Math.max(videoPlayer.volume - 0.1, 0);
-            } else if (event.key === 'ArrowLeft') {
-                loadChannel((currentChannelIndex - 1 + channels.length) % channels.length);
-            } else if (event.key === 'ArrowRight') {
-                loadChannel((currentChannelIndex + 1) % channels.length);
-            }
-        });
-
-        function animateTitle() {
-            const titleSpans = document.querySelectorAll('#mainTitle span');
-            titleSpans.forEach((span, index) => {
-                setTimeout(() => {
-                    span.style.opacity = '1';
-                    span.style.transform = 'translateY(0)';
-                }, index * 100);
-            });
-        }
-
-        castButton.addEventListener('click', () => {
-            if ('presentation' in navigator) {
-                navigator.presentation.defaultRequest = new PresentationRequest(['cast.html']);
-                navigator.presentation.defaultRequest.start()
-                    .then(connection => {
-                        connection.addEventListener('connect', () => {
-                            connection.send(JSON.stringify({
-                                action: 'loadChannel',
-                                channelInfo: channels[currentChannelIndex]
-                            }));
-                        });
-                    })
-                    .catch(error => console.error('Error starting presentation:', error));
-            } else {
-                console.log('Web Presentation API not supported');
-            }
-        });
-
-        window.addEventListener('load', () => {
-            loadChannelsFromLocalStorage();
-            createChannelButtons();
-            animateTitle();
-            document.querySelector('.category-button[data-category="all"]').classList.add('active');
-        });
-
-        shaka.polyfill.installAll();
+    }
+    lastTap = currentTime;
+});
     </script>
 </body>
 </html>
