@@ -164,8 +164,8 @@
         <p>&copy; 2023 IPTV - Todos los derechos reservados.</p>
     </footer>
 
-    <!-- Shaka Player -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.4/shaka-player.compiled.js"></script>
+    <!-- hls.js -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -173,30 +173,28 @@
             const channelItems = document.querySelectorAll('.channel-item');
             let currentChannel = null;
             let isFullscreen = false;
+            let hls = null;
 
             // Función para cambiar de canal
-            const changeChannel = async (src, kid = null, key = null) => {
-                if (ShakaPlayer.isBrowserSupported()) {
-                    try {
-                        const player = new ShakaPlayer.Player(videoPlayer);
-                        await player.load(src);
-
-                        // Configurar ClearKey DRM si se proporcionan kid y key
-                        if (kid && key) {
-                            const drmConfig = {
-                                clearKeys: {
-                                    [kid]: key
-                                }
-                            };
-                            player.configure({ drm: drmConfig });
-                        }
-
-                        videoPlayer.play();
-                    } catch (error) {
-                        console.error('Error al cargar el contenido:', error);
+            const changeChannel = (src) => {
+                if (Hls.isSupported()) {
+                    if (hls) {
+                        hls.destroy();
                     }
+
+                    hls = new Hls();
+                    hls.loadSource(src);
+                    hls.attachMedia(videoPlayer);
+                    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                        videoPlayer.play();
+                    });
+                } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+                    videoPlayer.src = src;
+                    videoPlayer.addEventListener('loadedmetadata', () => {
+                        videoPlayer.play();
+                    });
                 } else {
-                    console.error('El navegador no es compatible con Shaka Player.');
+                    console.error('El navegador no es compatible con HLS.');
                 }
             };
 
@@ -227,27 +225,23 @@
             };
 
             // Reproducir automáticamente el primer canal al cargar la página
-            const autoPlayFirstChannel = async () => {
+            const autoPlayFirstChannel = () => {
                 if (channelItems.length > 0) {
                     const firstChannel = channelItems[0];
                     const src = firstChannel.getAttribute('data-src');
-                    const kid = firstChannel.getAttribute('data-kid');
-                    const key = firstChannel.getAttribute('data-key');
 
                     currentChannel = firstChannel;
-                    await changeChannel(src, kid, key);
+                    changeChannel(src);
                 }
             };
 
             // Agregar eventos a los canales
             channelItems.forEach(item => {
-                item.addEventListener('click', async () => {
+                item.addEventListener('click', () => {
                     const src = item.getAttribute('data-src');
-                    const kid = item.getAttribute('data-kid');
-                    const key = item.getAttribute('data-key');
 
                     currentChannel = item;
-                    await changeChannel(src, kid, key);
+                    changeChannel(src);
                 });
 
                 item.addEventListener('dblclick', handleDoubleClick);
